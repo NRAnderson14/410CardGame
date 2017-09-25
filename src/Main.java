@@ -13,6 +13,8 @@ public class Main {
         cardlist.add(five_clubs);
         cardlist.add(queen_diamonds);
 
+
+
         Player player1 = new Player(cardlist);
         System.out.println(player1.getCards());
         player1.removeCard(five_clubs);
@@ -30,6 +32,13 @@ public class Main {
 
         for (int i = 0; i < 52; ++i) {
             System.out.println(testDeck.get(i).toReadable());
+        }
+
+        System.out.println();
+        CardProcessing.shuffleDeck(testDeck);
+
+        for (Card cd: testDeck) {
+            System.out.println(cd.toReadable());
         }
 
     }

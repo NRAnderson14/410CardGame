@@ -1,5 +1,6 @@
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 public class CardProcessing {
     private static final String[] suitsList = {"Clubs", "Diamonds", "Hearts", "Spades"};
@@ -17,8 +18,22 @@ public class CardProcessing {
         return deck;
     }
 
-    public static List<Card> shuffleDeck(List<Card> deckToBeShuffled) {
-        List<Card> placeholder = new ArrayList<>();
-        return placeholder;
+    public static void shuffleDeck(List<Card> deckToBeShuffled) {
+        Random r = new Random();
+        int index;
+
+        for (int i = deckToBeShuffled.size()-1; i > 0; --i) {
+            index = r.nextInt(i);
+
+            swap(deckToBeShuffled, index, i);
+        }
+    }
+
+    private static void swap(List<Card> list, int i, int j) {
+        Card temp;
+
+        temp = list.get(i);
+        list.set(i, list.get(j));
+        list.set(j, temp);
     }
 }
