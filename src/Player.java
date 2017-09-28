@@ -2,14 +2,9 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
-import java.net.DatagramPacket;
-import java.net.InetAddress;
-import java.net.MulticastSocket;
 import java.net.Socket;
-import java.nio.Buffer;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class Player {
     private List<Card> deck;
@@ -52,9 +47,12 @@ public class Player {
         String response = "Got the memo";
 
         try {
-            while ((message = inBound.readLine()) == null) {
+            while (true) {
+                if ((message = inBound.readLine()) != null) {
+                    System.out.println(message);
+                    break;
+                }
             }
-            System.out.println(message);
             outBound.println(response);
         } catch (IOException e) {
             e.printStackTrace();

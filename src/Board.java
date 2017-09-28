@@ -41,8 +41,11 @@ public class Board {
         String response;
 
         try {
-            while ((response = inBound.readLine()) == null) {
+            while (true) {
                 outBound.println(message);
+                if ((response = inBound.readLine()) != null) {
+                    break;
+                }
             }
             System.out.println(response);
         } catch (IOException e) {

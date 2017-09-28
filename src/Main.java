@@ -51,9 +51,17 @@ public class Main {
 //            e.printStackTrace();
 //        }
 
-        Threads serverThread = new Threads("serverThread", Threads.threadType.SERVER);
-        serverThread.start();
-        Threads clientThread = new Threads("clientThread", Threads.threadType.CLIENT);
-        clientThread.start();
+//        Threads serverThread = new Threads("serverThread", Threads.threadType.SERVER);
+//        serverThread.start();
+//        Threads clientThread = new Threads("clientThread", Threads.threadType.CLIENT);
+//        clientThread.start();
+
+        try {
+            Board b = new Board();
+            b.broadcastTest();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
     }
 }
