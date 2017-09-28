@@ -1,8 +1,10 @@
 public class Card {
     private int value;
-    private String suit;
+    private Suit suit;
 
-    public Card(int value, String suit) {
+    public enum Suit {CLUBS, DIAMONDS, HEARTS, SPADES}
+
+    public Card(int value, Suit suit) {
         this.value = value;
         this.suit = suit;
     }
@@ -11,7 +13,7 @@ public class Card {
         return value;
     }
 
-    public String getSuit() {
+    public Suit getSuit() {
         return suit;
     }
 
@@ -40,9 +42,24 @@ public class Card {
                 break;
         }
 
-        suit = suit.substring(0,1).toUpperCase() + suit.substring(1,suit.length());
+        res += suitToString(suit);
 
-        res += suit;
+        return res;
+    }
+
+    private String suitToString(Suit suit) {
+        String res = "ERROR";
+
+        switch (suit) {
+            case CLUBS:
+                res =  "Clubs";
+            case DIAMONDS:
+                res =  "Diamonds";
+            case HEARTS:
+                res =  "Hearts";
+            case SPADES:
+                res =  "Spades";
+        }
 
         return res;
     }

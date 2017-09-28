@@ -3,7 +3,7 @@ import java.util.List;
 import java.util.Random;
 
 public class CardProcessing {
-    private static final String[] suitsList = {"Clubs", "Diamonds", "Hearts", "Spades"};
+    private static final Card.Suit[] suitsList = {Card.Suit.CLUBS, Card.Suit.DIAMONDS, Card.Suit.HEARTS, Card.Suit.SPADES};
 
     //Generates a deck of 52 cards, in order
     public static List<Card> generateDeck() {
