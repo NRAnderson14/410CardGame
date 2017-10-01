@@ -6,16 +6,20 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Player {
+public class Player {   //Split into data and interface
     private List<Card> deck;
     private int wins;
-    private final int PORT = 4100;
-    private final String HOST;
+    private boolean isCurrentTurn = false;
+    private boolean hasPlayed = false;
+    private Card lastCardPlayed;
 
-    public Player(String host) throws IOException {
+    private final int PORT = 4100;
+//    private final String HOST;
+
+    public Player() throws IOException {
         this.deck = new ArrayList<>();
         wins = 0;
-        HOST = host;
+//        HOST = host;
     }
 
     public int getWins() {
@@ -38,24 +42,54 @@ public class Player {
         deck.remove(cardToBeRemoved);
     }
 
-    public void receiveData() throws IOException {
-        Socket socket = new Socket(HOST, PORT);
-        PrintWriter outBound = new PrintWriter(socket.getOutputStream(), true);
-        BufferedReader inBound = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-
-        String message;
-        String response = "Got the memo";
-
-        try {
-            while (true) {
-                if ((message = inBound.readLine()) != null) {
-                    System.out.println(message);
-                    break;
-                }
-            }
-            outBound.println(response);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    public void setCurrentTurn() {
+        isCurrentTurn = true;
     }
+
+    public void setNotCurrentTurn() {
+        isCurrentTurn = false;
+    }
+
+    public boolean isCurrentTurn() {
+        return isCurrentTurn;
+    }
+
+    private void setLastCardPlayed(Card lastPlayed) {
+        lastCardPlayed = lastPlayed;
+    }
+
+    public Card getLastCardPlayed() {
+        return lastCardPlayed;
+    }
+
+    public void playCard(Card played) {
+        //TODO: Remove card from deck
+        setLastCardPlayed(played);
+    }
+
+    public boolean hasPlayed() {
+        return hasPlayed;
+    }
+
+    //Not used, only for network purposes if needed later
+//    public void receiveData() throws IOException {
+//        Socket socket = new Socket(HOST, PORT);
+//        PrintWriter outBound = new PrintWriter(socket.getOutputStream(), true);
+//        BufferedReader inBound = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+//
+//        String message;
+//        String response = "Got the memo";
+//
+//        try {
+//            while (true) {
+//                if ((message = inBound.readLine()) != null) {
+//                    System.out.println(message);
+//                    break;
+//                }
+//            }
+//            outBound.println(response);
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//    }
 }

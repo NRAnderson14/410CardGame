@@ -6,6 +6,7 @@ import java.net.*;
 import java.util.ArrayList;
 import java.util.List;
 
+//Not used, only if needed for network purposes later
 public class Board {
     private List<Card> deck;
     private final int PORT = 4100;

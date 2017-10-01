@@ -17,6 +17,7 @@ public class Card {
         return suit;
     }
 
+    //Is this needed?
     public String toReadable() {
         String res;
 
@@ -47,6 +48,7 @@ public class Card {
         return res;
     }
 
+    //Again, is this needed?
     private String suitToString(Suit suit) {
         String res = "ERROR";
 
