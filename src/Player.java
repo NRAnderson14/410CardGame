@@ -7,9 +7,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Player {   //Split into data and interface
-    private List<Card> deck;
+    private String name;
+    private List<Card> hand;
     private List<Card> playedCards;
     private int wins;
+    private int[] currentScores;
     private boolean isCurrentTurn = false;
     private boolean hasPlayed = false;
     private Card lastCardPlayed;
@@ -17,8 +19,10 @@ public class Player {   //Split into data and interface
     private final int PORT = 4100;
 //    private final String HOST;
 
-    public Player() throws IOException {
-        this.deck = new ArrayList<>();
+    public Player(String name) throws IOException {
+        this.name = name;
+        this.hand = new ArrayList<>();
+        playedCards = new ArrayList<>();
         wins = 0;
 //        HOST = host;
     }
@@ -31,16 +35,16 @@ public class Player {   //Split into data and interface
         ++wins;
     }
 
-    public void setDeck(List<Card> deck) {
-        this.deck = new ArrayList<>(deck);
+    public void setDeck(List<Card> hand) {
+        this.hand = new ArrayList<>(hand);
     }
 
     public List<Card> getCards() {
-        return deck;
+        return hand;
     }
 
     public void removeCard(Card cardToBeRemoved) {
-        deck.remove(cardToBeRemoved);
+        hand.remove(cardToBeRemoved);
     }
 
     public void setCurrentTurn() {
@@ -69,12 +73,24 @@ public class Player {   //Split into data and interface
 
     public void playCard(Card played) {
         playedCards.add(played);
-        deck.remove(played);
+        hand.remove(played);
         setLastCardPlayed(played);
     }
 
     public boolean hasPlayed() {
         return hasPlayed;
+    }
+
+    public void startGUI() {
+        PlayerGUI currGUI = new PlayerGUI(name, hand, this);
+    }
+
+    public void updateCurrentScores(int[] newScores) {
+        currentScores = newScores;
+    }
+
+    public int[] getCurrentScores() {
+        return currentScores;
     }
 
     //Not used, only for network purposes if needed later

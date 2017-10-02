@@ -1,12 +1,22 @@
-public class Card {
+import javax.imageio.ImageIO;
+import javax.swing.*;
+import java.awt.*;
+import java.io.IOException;
+
+public class Card extends JButton {
     private int value;
     private Suit suit;
+    private String imgURL;
 
+    //The card suits
     public enum Suit {CLUBS, DIAMONDS, HEARTS, SPADES}
 
     public Card(int value, Suit suit) {
         this.value = value;
         this.suit = suit;
+        imgURL = getURL();
+
+        loadImage();
     }
 
     public int getValue() {
@@ -76,14 +86,59 @@ public class Card {
         switch (suit) {
             case CLUBS:
                 res =  "Clubs";
+                break;
             case DIAMONDS:
                 res =  "Diamonds";
+                break;
             case HEARTS:
                 res =  "Hearts";
+                break;
             case SPADES:
                 res =  "Spades";
+                break;
         }
 
         return res;
+    }
+
+    private String suitToURLString() {
+        String res = "";
+
+        switch (suit) {
+            case CLUBS:
+                res =  "C";
+                break;
+            case DIAMONDS:
+                res =  "D";
+                break;
+            case HEARTS:
+                res =  "H";
+                break;
+            case SPADES:
+                res =  "S";
+                break;
+        }
+
+        return res;
+    }
+
+    private String getURL() {
+        String url;
+
+        url = "Cards/" + value + suitToURLString() + ".png";
+
+        return url;
+    }
+
+    private void loadImage() {
+        int ratio = 8;
+
+        try {
+            Image img = ImageIO.read(getClass().getResource(imgURL));
+            Image resizedImg = img.getScaledInstance(500/ratio, 726/ratio, java.awt.Image.SCALE_SMOOTH);
+            this.setIcon(new ImageIcon(resizedImg));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }

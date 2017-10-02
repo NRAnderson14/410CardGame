@@ -1,11 +1,5 @@
 import java.util.*;
 
-//scores
-//log player info/events
-//distribute the cards
-//Enforce rules/ award win
-//turns
-
 public class Game {
     //Deck data
     private List<Card> deck;
@@ -13,7 +7,7 @@ public class Game {
 
     //Player data
     private List<Player> playerList;
-    private short playersPlayed = 0;
+    private int playersPlayed = 0;
 
     //Game data
     private Player lastRoundWinner;
@@ -124,6 +118,19 @@ public class Game {
         }
     }
 
+    public void updatePlayerCurrentScores() {
+        int[] scores;
+        int p1Score = playerList.get(0).getWins();
+        int p2Score = playerList.get(1).getWins();
+        int p3Score = playerList.get(2).getWins();
+
+        scores = new int[] {p1Score, p2Score, p3Score};
+
+        for (Player player : playerList) {
+            player.updateCurrentScores(scores);
+        }
+    }
+
 
     /*
      *
@@ -138,9 +145,13 @@ public class Game {
 
         lastRoundWinner = playerList.get(0);   //P1 leads the first round
 
-        for (int i = 1; i <= 17; ++i) {     //Play 17 rounds
-            playRound();
+        for (Player player : playerList) {
+            player.startGUI();
         }
+
+//        for (int i = 1; i <= 17; ++i) {     //Play 17 rounds
+//            playRound();
+//        }
     }
 
     //The meat and potatoes of the gameplay
@@ -208,7 +219,7 @@ public class Game {
         return winner;
     }
 
-    private Player getWinner() {    //TODO: figure out tie resolution
+    private Player getWinner() {
         Player winner = playerList.get(0);
 
         for (Player player: playerList) {
@@ -258,11 +269,21 @@ public class Game {
      *
      */
 
-    public short getPlayersPlayed() {
+    public int getPlayersPlayed() {
         return playersPlayed;
     }
 
     public List<Player> getPlayerList() {
         return playerList;
+    }
+
+    public void testSetCurrScores(int one, int two, int three) {
+        int[] scores;
+
+        scores = new int[] {one, two, three};
+
+        for (Player player : playerList) {
+            player.updateCurrentScores(scores);
+        }
     }
 }
