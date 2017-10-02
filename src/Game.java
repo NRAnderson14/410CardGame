@@ -112,9 +112,11 @@ public class Game {
         try {
             if (playerList.get(currPlayerIndex + 1) != null) {
                 currentPlayer = playerList.get(currPlayerIndex+1);
+                currentPlayer.isCurrentTurn();
             }
         } catch (IndexOutOfBoundsException throwAway) {     //If we are at the end of the list, go to the beginning
             currentPlayer = playerList.get(0);
+            currentPlayer.isCurrentTurn();
         }
     }
 
@@ -131,6 +133,14 @@ public class Game {
         }
     }
 
+    private void setCurrentPlayerInList() {
+        String playerName = currentPlayer.getName();
+
+        for (Player player : playerList) {
+            player.setCurrentPlayer(playerName);
+        }
+    }
+
 
     /*
      *
@@ -144,14 +154,17 @@ public class Game {
         splitAndDistributeDeck(playerList.get(0), playerList.get(1), playerList.get(2));
 
         lastRoundWinner = playerList.get(0);   //P1 leads the first round
+        currentPlayer = playerList.get(0);
+        currentPlayer.setCurrentTurn();
+        setCurrentPlayerInList();
 
         for (Player player : playerList) {
             player.startGUI();
         }
 
-//        for (int i = 1; i <= 17; ++i) {     //Play 17 rounds
-//            playRound();
-//        }
+        for (int i = 1; i <= 17; ++i) {     //Play 17 rounds
+            playRound();
+        }
     }
 
     //The meat and potatoes of the gameplay
@@ -164,10 +177,29 @@ public class Game {
         playersPlayed = 1;
 
         do {
-            while (!currentPlayer.hasPlayed())
+            while (!currentPlayer.hasPlayed()) {
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+
             cardsPlayed.add(currentPlayer.getLastCardPlayed());
+            System.out.println("Got past the while");
+
+            for (Player player : playerList) {
+                player.updateOthersCards(currentPlayer.getLastCardPlayed());
+            }
+
             selectNextPlayer();
+
+            for (Player player : playerList) {
+                player.updateLogArea("doo");
+            }
+
             ++playersPlayed;
+            System.out.println("Reached the bottom of the loop");
         } while (playersPlayed < 3);
 
         highestCard = getHighestCardFromList(cardsPlayed);  //After the round is over
@@ -180,6 +212,9 @@ public class Game {
 
         //Award a win to the highest card
         roundWinner.addWin();
+        for (Player player : playerList) {
+            updatePlayerCurrentScores();
+        }
         //Set lastRoundWinner to the winner so that they go first next round
         lastRoundWinner = roundWinner;
     }
@@ -243,8 +278,8 @@ public class Game {
         //Look at all of the cards played, and get their suits and compare
         //clubs < diamonds < hearts < spades
         for (int i = 0; i < 17; ++i) {     //17 rounds
-            p1Card = p1.getCardsPlayed().get(i);
-            p2Card = p2.getCardsPlayed().get(i);
+            p1Card = p1.getCardsPlayedByPlayer().get(i);
+            p2Card = p2.getCardsPlayedByPlayer().get(i);
 
             if (getHighestCardOfTwo(p1Card, p2Card) == p1Card) {
                 ++p1Wins;
@@ -286,4 +321,5 @@ public class Game {
             player.updateCurrentScores(scores);
         }
     }
+
 }
