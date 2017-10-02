@@ -17,6 +17,27 @@ public class Card {
         return suit;
     }
 
+    public int suitToValue() {
+        int val = 0;
+
+        switch (suit) {
+            case CLUBS:
+                val = 1;
+                break;
+            case DIAMONDS:
+                val = 2;
+                break;
+            case HEARTS:
+                val = 3;
+                break;
+            case SPADES:
+                val = 4;
+                break;
+        }
+
+        return val;
+    }
+
     //Is this needed?
     public String toReadable() {
         String res;

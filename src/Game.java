@@ -159,7 +159,7 @@ public class Game {
             ++playersPlayed;
         } while (playersPlayed < 3);
 
-        highestCard = getHighestCard(cardsPlayed);  //After the round is over
+        highestCard = getHighestCardFromList(cardsPlayed);  //After the round is over
         for (Player player : playerList) {
             if (player.getLastCardPlayed() == highestCard) {
                 roundWinner = player;
@@ -173,21 +173,82 @@ public class Game {
         lastRoundWinner = roundWinner;
     }
 
-    private Card getHighestCard(List<Card> cardsToCompare) {
+    private Card getHighestCardFromList(List<Card> cardsToCompare) {
+        Card currHighest = new Card(2, Card.Suit.CLUBS);
         //Clubs < Diamonds < Hearts < Spades
-        return new Card(12, Card.Suit.DIAMONDS); //Placeholder
+        //loop through, check values first, then if values ==, check suits
+        for (Card card : cardsToCompare) {
+            if (card.getValue() > currHighest.getValue()) {
+                currHighest = card;
+            } else if (card.getValue() == currHighest.getValue()) {
+                if (card.suitToValue() > currHighest.suitToValue()) {
+                    currHighest = card;
+                }   //Otherwise the current highest stays the same
+            }
+        }
+
+        return currHighest;
     }
 
-    private Player getWinner() {
+    private Card getHighestCardOfTwo(Card c1, Card c2) {
+        Card winner;
+
+        if (c1.getValue() > c2.getValue()) {
+            winner = c1;
+        } else if (c1.getValue() == c2.getValue()) {
+            if (c1.suitToValue() > c2.suitToValue()) {
+                winner = c1;
+            } else {
+                winner = c2;
+            }
+        } else {
+            winner = c2;
+        }
+
+        return winner;
+    }
+
+    private Player getWinner() {    //TODO: figure out tie resolution
         Player winner = playerList.get(0);
 
-        for (Player player: playerList) {    //Can't use the built-in List forEach method because lambdas want values, not variables for some darn reason
-            if (player.getWins() > winner.getWins()) {  //Honestly why though
+        for (Player player: playerList) {
+            if (player.getWins() > winner.getWins()) {
                 winner = player;
+            } else if (player.getWins() == winner.getWins()) {
+                winner = breakTie(player, winner);
             }
         }
 
         return winner;
+    }
+
+    private Player breakTie(Player p1, Player p2) {
+        Player tieWinner;
+        int p1Wins = 0;
+        int p2Wins = 0;
+        Card p1Card;
+        Card p2Card;
+
+        //Look at all of the cards played, and get their suits and compare
+        //clubs < diamonds < hearts < spades
+        for (int i = 0; i < 17; ++i) {     //17 rounds
+            p1Card = p1.getCardsPlayed().get(i);
+            p2Card = p2.getCardsPlayed().get(i);
+
+            if (getHighestCardOfTwo(p1Card, p2Card) == p1Card) {
+                ++p1Wins;
+            } else {
+                ++p2Wins;
+            }
+        }
+
+        if (p1Wins > p2Wins) {
+            tieWinner = p1;
+        } else {
+            tieWinner = p2;
+        }
+
+        return tieWinner;
     }
 
 

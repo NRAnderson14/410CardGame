@@ -8,6 +8,7 @@ import java.util.List;
 
 public class Player {   //Split into data and interface
     private List<Card> deck;
+    private List<Card> playedCards;
     private int wins;
     private boolean isCurrentTurn = false;
     private boolean hasPlayed = false;
@@ -62,8 +63,13 @@ public class Player {   //Split into data and interface
         return lastCardPlayed;
     }
 
+    public List<Card> getCardsPlayed() {
+        return playedCards;
+    }
+
     public void playCard(Card played) {
-        //TODO: Remove card from deck
+        playedCards.add(played);
+        deck.remove(played);
         setLastCardPlayed(played);
     }
 
