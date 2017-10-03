@@ -34,6 +34,7 @@ public class Player extends JFrame {   //Split into data and interface
         cardsPlayedByPlayer = new ArrayList<>();
         cardsPlayedByOthers = new ArrayList<>();
         wins = 0;
+        currentScores = new int[] {0, 0, 0};
     }
 
 
@@ -87,7 +88,7 @@ public class Player extends JFrame {   //Split into data and interface
         return cardsPlayedByPlayer;
     }
 
-    public void playCard(Card played) {
+    public void playCard(Card played) {     //TODO: check if the card is in the suit played by others
         if (isCurrentTurn) {
             cardsPlayedByPlayer.add(played);
             hand.remove(played);
@@ -98,12 +99,16 @@ public class Player extends JFrame {   //Split into data and interface
             isCurrentTurn = false;
             System.out.println(hasPlayed);
         } else {
-            updateLogArea("Wait your turn");
+            setLogText("Wait your turn");
         }
     }
 
     public boolean hasPlayed() {
         return hasPlayed;
+    }
+
+    public void setHasNotPlayed() {
+        hasPlayed = false;
     }
 
     public void updateCurrentScores(int[] newScores) {
@@ -234,18 +239,30 @@ public class Player extends JFrame {   //Split into data and interface
 
     public void updateGameBoard(List<Card> newCards) {
         gameBoard.removeAll();
-        System.out.println("Removed all");
 
         for (Card card : newCards) {
             gameBoard.add(card);
-            System.out.println("Added " + card.toReadable());
         }
 
         gameBoard.updateUI();
-        System.out.println("Updated UI");
     }
 
-    public void updateLogArea(String newText) {
+    public void clearGameBoard() {
+        gameBoard.removeAll();
+        gameBoard.updateUI();
+    }
+
+    public void updateLogArea() {
+        if (isCurrentTurn()) {
+            log.setText("Your turn");
+        } else {
+            log.setText("Current player: " + getCurrentPlayer());
+        }
+
+        log.updateUI();
+    }
+
+    public void setLogText(String newText) {
         log.setText(newText);
         log.updateUI();
     }

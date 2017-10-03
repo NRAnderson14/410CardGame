@@ -16,8 +16,12 @@ public class Main {
 
 //            //Set up the game
             Game testGame = new Game(playerUno, playerDos, playerTres);
-            testGame.testSetCurrScores(7, 21, 97);
             testGame.playGame();
+
+            //Testing the win functionality
+//            testGame.testSetCurrScores(7, 0, 0);
+//            testGame.startAllGUIs();
+//            testGame.testGetWinner();
 
 
         } catch (Exception e) {

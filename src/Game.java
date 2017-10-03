@@ -112,11 +112,11 @@ public class Game {
         try {
             if (playerList.get(currPlayerIndex + 1) != null) {
                 currentPlayer = playerList.get(currPlayerIndex+1);
-                currentPlayer.isCurrentTurn();
+                currentPlayer.setCurrentTurn();
             }
         } catch (IndexOutOfBoundsException throwAway) {     //If we are at the end of the list, go to the beginning
             currentPlayer = playerList.get(0);
-            currentPlayer.isCurrentTurn();
+            currentPlayer.setCurrentTurn();
         }
     }
 
@@ -165,6 +165,8 @@ public class Game {
         for (int i = 1; i <= 17; ++i) {     //Play 17 rounds
             playRound();
         }
+
+        getWinner();
     }
 
     //The meat and potatoes of the gameplay
@@ -174,7 +176,15 @@ public class Game {
         List<Card> cardsPlayed = new ArrayList<>();
         //lastRoundWinner goes first
         setCurrentPlayer(lastRoundWinner);
-        playersPlayed = 1;
+        playersPlayed = 0;
+
+        for (Player player : playerList) {
+            player.setHasNotPlayed();
+            player.clearOthersCards();
+            player.clearGameBoard();
+            player.setCurrentPlayer(currentPlayer.getName());
+            player.updateLogArea();
+        }
 
         do {
             while (!currentPlayer.hasPlayed()) {
@@ -186,23 +196,37 @@ public class Game {
             }
 
             cardsPlayed.add(currentPlayer.getLastCardPlayed());
-            System.out.println("Got past the while");
 
             for (Player player : playerList) {
                 player.updateOthersCards(currentPlayer.getLastCardPlayed());
+
+                /* So this next part is funny. The adding the cards to the panel was not working, except for player 3.
+                 *  I tested it, and the data was there, just not the card button. So as it worked out, the program
+                 *  was trying to access the png image for the card at the same time, so the last access got the file,
+                 *  so that was why only player three was getting the image. Pausing the thread for just enough time to
+                 *  let each player load the image works, and that is what you see below.
+                 */
+                try {
+                    Thread.sleep(5);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
 
             selectNextPlayer();
+            System.out.println(currentPlayer.getName());
 
             for (Player player : playerList) {
-                player.updateLogArea("doo");
+                player.setCurrentPlayer(currentPlayer.getName());
+                player.updateLogArea();
             }
 
             ++playersPlayed;
-            System.out.println("Reached the bottom of the loop");
+            System.out.println(playersPlayed);
         } while (playersPlayed < 3);
 
-        highestCard = getHighestCardFromList(cardsPlayed);  //After the round is over
+        //After the round is over
+        highestCard = getHighestCardFromList(cardsPlayed);
         for (Player player : playerList) {
             if (player.getLastCardPlayed() == highestCard) {
                 roundWinner = player;
@@ -254,18 +278,32 @@ public class Game {
         return winner;
     }
 
-    private Player getWinner() {
+    private void getWinner() {
         Player winner = playerList.get(0);
+        int highestScore = 0;
 
         for (Player player: playerList) {
-            if (player.getWins() > winner.getWins()) {
+            if (player.getWins() > highestScore) {
+                highestScore = player.getWins();
                 winner = player;
-            } else if (player.getWins() == winner.getWins()) {
-                winner = breakTie(player, winner);
             }
+
+//            if (player.getWins() > winner.getWins()) {
+//                winner = player;
+//            } else if (player.getWins() == winner.getWins()) {
+//                winner = breakTie(player, winner);
+//            }
         }
 
-        return winner;
+        for (Player player : playerList) {
+            if (player == winner) {
+                player.setLogText("YOU WIN!");
+            } else {
+                player.setLogText("You lose");
+            }
+            player.clearGameBoard();
+        }
+
     }
 
     private Player breakTie(Player p1, Player p2) {
@@ -320,6 +358,16 @@ public class Game {
         for (Player player : playerList) {
             player.updateCurrentScores(scores);
         }
+    }
+
+    public void startAllGUIs() {
+        for (Player player : playerList) {
+            player.startGUI();
+        }
+    }
+
+    public void testGetWinner() {
+        getWinner();
     }
 
 }
