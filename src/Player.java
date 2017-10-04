@@ -78,15 +78,26 @@ public class Player extends JFrame {   //Split into data and interface
 
     //Handles what to do when the player plays a card
     public void playCard(Card played) {     //TODO: check if the card is in the suit played by others
-        //It must be the player's turn in order to play a card
+        Card.Suit suitInPlay = null;
+
+        if (!cardsPlayedByOthers.isEmpty()) {
+            suitInPlay = getSuitInPlay();
+        }
+
+        //It must be the player's turn in order to play a card and they can only play the same suit
         if (isCurrentTurn) {
-            cardsPlayedByPlayer.add(played);    //Add the card to the list of cards that the player has played
-            hand.remove(played);                //Remove the card played from the cards available to be played
-            setLastCardPlayed(played);
-            cardHolder.remove(played);          //Remove the card image from the cardHolder
-            cardHolder.updateUI();
-            hasPlayed = true;                   //The player has now played
-            isCurrentTurn = false;              //And as such, it is no longer their turn
+            //If they are first, they can play any suit, and if not they must play the suit in play if they have any
+            if (played.getSuit() == suitInPlay || !hasSuitInHand(suitInPlay)) {
+                cardsPlayedByPlayer.add(played);    //Add the card to the list of cards that the player has played
+                hand.remove(played);                //Remove the card played from the cards available to be played
+                setLastCardPlayed(played);
+                cardHolder.remove(played);          //Remove the card image from the cardHolder
+                cardHolder.updateUI();
+                hasPlayed = true;                   //The player has now played
+                isCurrentTurn = false;              //And as such, it is no longer their turn
+            } else {
+                setLogText("You must play the same suit");
+            }
         } else {
             setLogText("Wait your turn");       //Tell them that they can't play when it is not their turn
         }
@@ -108,6 +119,26 @@ public class Player extends JFrame {   //Split into data and interface
     //Returns all of the cards played by the player over the course of the game; Used for tie-breaking
     public List<Card> getCardsPlayedByPlayer() {
         return cardsPlayedByPlayer;
+    }
+
+    //Checks to see if the player has the selected suit in their hand
+    private boolean hasSuitInHand(Card.Suit suitToCheck) {
+        boolean hasSuit = false;
+
+        for (Card card : hand) {
+            if (card.getSuit() == suitToCheck) {
+                hasSuit = true;
+            }
+        }
+
+        return hasSuit;
+    }
+
+    //Returns the first card in the list of cards played by others
+    private Card.Suit getSuitInPlay() {
+        Card cardInPlay;
+        cardInPlay = cardsPlayedByOthers.get(0);
+        return cardInPlay.getSuit();
     }
 
     /*
