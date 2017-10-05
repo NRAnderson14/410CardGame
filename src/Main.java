@@ -1,4 +1,6 @@
 import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -22,6 +24,20 @@ public class Main {
 //            testGame.testSetCurrScores(7, 0, 0);
 //            testGame.startAllGUIs();
 //            testGame.testGetWinner();
+
+            System.out.println("here");
+            Socket p1Socket = null;
+            Socket p2Socket = null;
+            Socket p3Socket = null;
+
+            List<Socket> persList = new ArrayList<>(3);
+            persList.add(p1Socket);
+            persList.add(p2Socket);
+            persList.add(p3Socket);
+
+            for (Socket socket : persList) {
+                socket = new Socket("127.0.0.1", 4100);
+            }
 
 
         } catch (Exception e) {

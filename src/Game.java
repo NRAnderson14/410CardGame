@@ -1,3 +1,8 @@
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.util.*;
 
 /*
@@ -29,12 +34,40 @@ public class Game {
     private Player lastRoundWinner;
     private Player currentPlayer;
 
+    //Server data
+    private ServerSocket serverSocket;
+    private ObjectOutputStream outputStream;
+    private ObjectInputStream  inputStream;
+    private int numConnections;
+    private List<Socket> clients;
+
 
     public Game(Player p1, Player p2, Player p3) {
         playerList = new ArrayList(3);
         playerList.add(p1);
         playerList.add(p2);
         playerList.add(p3);
+
+
+    }
+
+    private void startServer() {
+        clients = new ArrayList<>(3);
+
+        try {
+            serverSocket = new ServerSocket(4100);      //CS 410(0)
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        while (true) {
+            try {
+                Socket sock = serverSocket.accept();
+                new CommunicationThread(sock).start();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
 
@@ -157,6 +190,11 @@ public class Game {
         }
     }
 
+    //Sends the player back to a client
+    private void sendPlayerOverNetwork(Player playerToSend) {
+
+    }
+
 
     /*
      *
@@ -175,15 +213,25 @@ public class Game {
      *
      */
     public void playGame() {
+        Runnable server = new Runnable() {
+            @Override
+            public void run() {
+                startServer();
+            }
+        };
+        new Thread(server).start();
+
         createAndShuffleDeck();
-        splitAndDistributeDeck(playerList.get(0), playerList.get(1), playerList.get(2));
+        splitAndDistributeDeck(playerList.get(0), playerList.get(1), playerList.get(2));    //TODO: network this
 
         lastRoundWinner = playerList.get(0);   //P1 leads the first round
         currentPlayer = playerList.get(0);
         currentPlayer.setCurrentTurn();
         setCurrentPlayerInList();
 
-        for (Player player : playerList) {      //Start the GUI for each player
+        //Send over network
+
+        for (Player player : playerList) {      //Start the GUI for each player     TODO: this will be done locally now
             player.startGUI();
         }
 
@@ -191,7 +239,7 @@ public class Game {
             playRound();
         }
 
-        getWinner();    //Gets the game's winner
+        getWinner();    //Gets the game's winner    TODO: over network
     }
 
     /*
@@ -212,7 +260,7 @@ public class Game {
         setCurrentPlayer(lastRoundWinner);  //The winner of the last round goes first
         playersPlayed = 0;      //No one has played yet
 
-        for (Player player : playerList) {      //Reset the data and GUI for all of the players
+        for (Player player : playerList) {      //Reset the data and GUI for all of the players     TODO: Network
             player.setHasNotPlayed();
             player.clearOthersCards();
             player.clearGameBoard();
@@ -220,10 +268,12 @@ public class Game {
             player.updateLogArea();
         }
 
+        //Send out the update over network here
+
         do {
             while (!currentPlayer.hasPlayed()) {    //Wait until the current player has played their card
                 try {
-                    Thread.sleep(500);
+                    Thread.sleep(50);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -276,9 +326,8 @@ public class Game {
             e.printStackTrace();
         }
 
-        for (Player player : playerList) {      //Send the new scores out to all of the players
-            updatePlayerCurrentScores();
-        }
+        //Send the new scores out to all of the players
+        updatePlayerCurrentScores();
 
         //Set lastRoundWinner to the winner so that they go first next round
         lastRoundWinner = roundWinner;
@@ -344,6 +393,8 @@ public class Game {
             }
             player.clearGameBoard();
         }
+
+        //Send over network
 
     }
 

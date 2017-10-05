@@ -2,6 +2,7 @@ import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
+import java.io.Serializable;
 
 /*
  *  The game's card class
@@ -14,7 +15,7 @@ import java.io.IOException;
  *  The images are in the format of "VS.png", where V is the value 2-14, and S is the suit, C, D, H, or S.
  *
  */
-public class Card extends JButton {
+public class Card extends JButton implements Serializable {
     private int value;
     private Suit suit;
     private String imgURL;

@@ -1,8 +1,9 @@
 import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.io.Serializable;
 import java.util.List;
+import java.util.ArrayList;
 
 /*
  *  The game's Player class
@@ -10,7 +11,7 @@ import java.util.List;
  *  This class is used for each person playing the game, and stores all of the relevant information
  *  This class also deals with the creation and management of the player's game window
  */
-public class Player extends JFrame {   //Split into data and interface
+public class Player extends JFrame implements Serializable {   //Split into data and interface
     //Data
     private Card lastCardPlayed;
     private List<Card> hand;
@@ -19,7 +20,7 @@ public class Player extends JFrame {   //Split into data and interface
     private int gameScore;
     private int[] currentScores;                //The scores of all the players
     private boolean isCurrentTurn;
-    private volatile boolean hasPlayed;
+    private volatile boolean hasPlayed;         //Needs to be checked often, so don't cache
     private String name;
     private String currentPlayer;               //The name of the current player
 
