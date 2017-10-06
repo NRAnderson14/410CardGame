@@ -32,6 +32,28 @@ public class Card extends JButton implements Serializable {
         loadImage();        //Load the image specified in imgURL
     }
 
+    public Card(int value, String suit) {
+        this.value = value;
+        suit = suit.toLowerCase();
+        switch (suit) {
+            case ("c"):
+                this.suit = Suit.CLUBS;
+                break;
+            case ("d"):
+                this.suit = Suit.DIAMONDS;
+                break;
+            case ("h"):
+                this.suit = Suit.HEARTS;
+                break;
+            case ("s"):
+                this.suit = Suit.SPADES;
+                break;
+        }
+
+        imgURL = getURL();
+        loadImage();
+    }
+
 
     //Returns the value of the card
     public int getValue() {
@@ -129,6 +151,14 @@ public class Card extends JButton implements Serializable {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public String toNetString() {
+        String res = "";
+
+        res = value + "|" + suitToURLString();
+
+        return res;
     }
 
 

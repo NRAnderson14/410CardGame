@@ -43,10 +43,10 @@ public class Game {
 
 
     public Game(Player p1, Player p2, Player p3) {
-        playerList = new ArrayList(3);
-        playerList.add(p1);
-        playerList.add(p2);
-        playerList.add(p3);
+//        playerList = new ArrayList(3);
+//        playerList.add(p1);
+//        playerList.add(p2);
+//        playerList.add(p3);
 
 
     }
@@ -90,6 +90,33 @@ public class Game {
         deck = generatedDeck;
     }
 
+    public List<String> genStrDeck() {
+        List<String> genDeck = new ArrayList<>(52);
+
+        for (int suit = 0; suit < 4; ++suit) {
+            for (int value = 2; value <= 14; ++value) {
+                String strCard = "";
+                switch (suit) {
+                    case (0):
+                        strCard = "c";
+                        break;
+                    case (1):
+                        strCard = "d";
+                        break;
+                    case (2):
+                        strCard = "h";
+                        break;
+                    case (3):
+                        strCard = "s";
+                        break;
+                }
+                genDeck.add(value + "|" + strCard);
+            }
+        }
+
+        return genDeck;
+    }
+
     //Shuffles the deck
     private void shuffleDeck() {
         Random r = new Random();
@@ -100,6 +127,25 @@ public class Game {
 
             swap(deck, index, i);
         }
+    }
+
+    public void shuffleDeck2(List<String> dock) {
+        Random r = new Random();
+        int index;
+
+        for (int i = dock.size()-1; i > 0; --i) {
+            index = r.nextInt(i);
+
+            swapDock(dock, index, i);
+        }
+    }
+
+    private void swapDock(List<String> list, int i, int j) {
+        String temp;
+
+        temp = list.get(i);
+        list.set(i, list.get(j));
+        list.set(j, temp);
     }
 
     //Swaps i with j

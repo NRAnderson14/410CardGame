@@ -1,7 +1,7 @@
 import javax.swing.*;
 import java.awt.*;
-import java.io.IOException;
-import java.io.Serializable;
+import java.io.*;
+import java.net.Socket;
 import java.util.List;
 import java.util.ArrayList;
 
@@ -16,13 +16,20 @@ public class Player extends JFrame implements Serializable {   //Split into data
     private Card lastCardPlayed;
     private List<Card> hand;
     private List<Card> cardsPlayedByPlayer;     //The cards the player themself have played
-    private List<Card> cardsPlayedByOthers;     //The cards that the other players have played
-    private int gameScore;
-    private int[] currentScores;                //The scores of all the players
-    private boolean isCurrentTurn;
+    private List<Card> cardsPlayedByOthers;     //+The cards that the other players have played
+    private int gameScore;                      //+
+    private int[] currentScores;                //+The scores of all the players
+    private boolean isCurrentTurn;              //+
     private volatile boolean hasPlayed;         //Needs to be checked often, so don't cache
     private String name;
     private String currentPlayer;               //The name of the current player
+
+    //Network data
+    private final String HOST;
+    private final int PORT;
+    private Socket socket;
+    private PrintWriter outBound;
+    private BufferedReader inBound;
 
     //GUI
     private JPanel frame = new JPanel();
@@ -35,7 +42,7 @@ public class Player extends JFrame implements Serializable {   //Split into data
     private JTextArea log = new JTextArea();
 
 
-    public Player(String name) throws IOException {
+    public Player(String name, String host, int port) throws IOException {
         this.name = name;
         this.hand = new ArrayList<>();
         cardsPlayedByPlayer = new ArrayList<>();
@@ -44,6 +51,21 @@ public class Player extends JFrame implements Serializable {   //Split into data
         currentScores = new int[] {0, 0, 0};
         isCurrentTurn = false;
         hasPlayed = false;
+
+        this.HOST = host;
+        this.PORT = port;
+
+        socket = new Socket(HOST, PORT);
+        outBound = new PrintWriter(socket.getOutputStream(), true);
+        inBound = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+
+        Runnable server = new Runnable() {
+            @Override
+            public void run() {
+                netLoop();
+            }
+        };
+        new Thread(server).start();
     }
 
 
@@ -96,6 +118,7 @@ public class Player extends JFrame implements Serializable {   //Split into data
                 cardHolder.updateUI();
                 hasPlayed = true;                   //The player has now played
                 isCurrentTurn = false;              //And as such, it is no longer their turn
+                outBound.println("playcard~" + played.toNetString());
             } else {
                 setLogText("You must play the same suit");
             }
@@ -189,10 +212,94 @@ public class Player extends JFrame implements Serializable {   //Split into data
         return name;
     }
 
+    /*
+     *
+     *  Network methods
+     *
+     */
+    private void netLoop() {
+        String message;
+
+        try {
+            while (true) {
+                if ((message = inBound.readLine()) != null) {
+                    executeCommand(message);
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void executeCommand(String rawMessage) {
+        String command;
+        String data;
+
+        command = rawMessage.substring(0, rawMessage.indexOf("~"));
+        data = rawMessage.substring(rawMessage.indexOf("~")+1);
+
+        switch (command) {
+            case ("addwin"):
+                this.addWin();
+                break;
+            case ("setlogtext"):
+                this.setLogText(data);
+                break;
+            case ("handcard"):  //Works
+                int val = Integer.parseInt(data.substring(0,data.indexOf("|")));
+                String suit = data.substring(data.indexOf("|")+1);
+                hand.add(new Card(val, suit));
+                break;
+            case ("setcurrplayer"):
+                if (data.equals("self")) {
+                    this.setCurrentPlayer(this.getName());
+                } else {
+                    this.setCurrentPlayer(data);
+                }
+                break;
+            case ("setcurrturn"):
+                this.setCurrentTurn();
+                break;
+            case ("updtotherscards"):
+                int val2 = Integer.parseInt(data.substring(0,data.indexOf("|")));
+                String suit2 = data.substring(data.indexOf("|")+1);
+                this.updateOthersCards(new Card(val2, suit2));
+                break;
+            case ("clrboard"):
+                this.clearGameBoard();
+                break;
+            case ("clrcards"):
+                this.clearOthersCards();
+                break;
+            case ("printhand"):
+                this.printHand();
+                break;
+            case ("startgui"):
+                this.startGUI();
+                break;
+            case ("updatecurrscores"):
+                int[] scores = new int[3];
+                int firstIndex = data.indexOf("|");
+                int lastIndex = data.lastIndexOf("|");
+                scores[0] = Integer.parseInt(data.substring(0, firstIndex));
+                scores[1] = Integer.parseInt(data.substring(firstIndex+1, lastIndex));
+                scores[2] = Integer.parseInt(data.substring(lastIndex+1));
+
+                this.updateCurrentScores(scores);
+                break;
+            case ("getscore"):
+                int score = this.gameScore;
+                outBound.println(score);
+                break;
+            default:
+                break;
+        }
+    }
+
 
     /*
      *
-     *  GUI Methods
+     *  GUI methods
      *
      */
 
@@ -332,6 +439,12 @@ public class Player extends JFrame implements Serializable {   //Split into data
 
     public List<Card> getCards() {
         return hand;
+    }
+
+    private void printHand() {
+        for (Card card : hand) {
+            System.out.println(card.toReadable());
+        }
     }
 
     public int[] getCurrentScores() {

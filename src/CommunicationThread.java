@@ -5,24 +5,17 @@ public class CommunicationThread extends Thread {
     Socket socket;
 
     public CommunicationThread(Socket connectedSocket) {
-        socket = connectedSocket;
+        this.socket = connectedSocket;
     }
 
     @Override
     public void run() {
-        InputStream inStream = null;
-        OutputStream outStream = null;
-        BufferedInputStream binStream = null;
         ObjectOutputStream oOutputStream = null;
         ObjectInputStream oInputStream = null;
 
         try {
-            inStream = socket.getInputStream();
-            binStream = new BufferedInputStream(inStream);
-            outStream = socket.getOutputStream();
-
-            oOutputStream = new ObjectOutputStream(outStream);
-            oInputStream = new ObjectInputStream(binStream);
+            oOutputStream = new ObjectOutputStream(socket.getOutputStream());
+            oInputStream = new ObjectInputStream(socket.getInputStream());
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -36,7 +29,14 @@ public class CommunicationThread extends Thread {
                     } catch (EOFException ee) {
                         //Ignore
                     }
-                    System.out.println(receivedPlayer.getName());
+
+                    receivedPlayer.addWin();
+                    receivedPlayer.addWin();
+
+                    oOutputStream.writeObject(receivedPlayer);
+//                    oInputStream.close();
+//                    oOutputStream.close();
+//                    socket.close();
                 } catch (ClassNotFoundException e) {
                     e.printStackTrace();
                 }
