@@ -235,12 +235,23 @@ public class Player extends JFrame implements Serializable {   //Split into data
         String command;
         String data;
 
+        System.out.println(rawMessage);
         command = rawMessage.substring(0, rawMessage.indexOf("~"));
         data = rawMessage.substring(rawMessage.indexOf("~")+1);
 
         switch (command) {
+            case ("hasplayed"):
+                if (hasPlayed) {
+                    outBound.println("true");
+                } else {
+                    outBound.println("false");
+                }
+                break;
             case ("addwin"):
                 this.addWin();
+                break;
+            case ("getname"):
+                outBound.println(this.getName());
                 break;
             case ("setlogtext"):
                 this.setLogText(data);
@@ -251,7 +262,7 @@ public class Player extends JFrame implements Serializable {   //Split into data
                 hand.add(new Card(val, suit));
                 break;
             case ("setcurrplayer"):
-                if (data.equals("self")) {
+                if (data.equals(this.getName())) {
                     this.setCurrentPlayer(this.getName());
                 } else {
                     this.setCurrentPlayer(data);
@@ -259,6 +270,9 @@ public class Player extends JFrame implements Serializable {   //Split into data
                 break;
             case ("setcurrturn"):
                 this.setCurrentTurn();
+                break;
+            case ("setnotturn"):
+                this.setNotCurrentTurn();
                 break;
             case ("updtotherscards"):
                 int val2 = Integer.parseInt(data.substring(0,data.indexOf("|")));
@@ -290,6 +304,20 @@ public class Player extends JFrame implements Serializable {   //Split into data
             case ("getscore"):
                 int score = this.gameScore;
                 outBound.println(score);
+                break;
+            case ("updatelog"):
+                this.updateLogArea();
+                break;
+            case ("sethasnotplayed"):
+                this.setHasNotPlayed();
+                break;
+            case ("getlastcard"):
+                outBound.println(lastCardPlayed.toNetString());
+                break;
+            case ("getcardplayed"):
+                int index = Integer.parseInt(data);
+                String netRes = cardsPlayedByPlayer.get(index).toNetString();
+                outBound.println(netRes);
                 break;
             default:
                 break;

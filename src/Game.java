@@ -1,6 +1,6 @@
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils;
+
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.*;
@@ -29,20 +29,23 @@ public class Game {
     //Player data
     private List<Player> playerList;
     private int playersPlayed = 0;
+    private int[] currentScores;
 
     //Game data
     private Player lastRoundWinner;
+    private ClientConnection netLastRoundWinner;
     private Player currentPlayer;
+    private ClientConnection netCurrentPlayer;
 
     //Server data
     private ServerSocket serverSocket;
     private ObjectOutputStream outputStream;
     private ObjectInputStream  inputStream;
     private int numConnections;
-    private List<Socket> clients;
+    private List<ClientConnection> clients;   //List of player connections
 
 
-    public Game(Player p1, Player p2, Player p3) {
+    public Game() {
 //        playerList = new ArrayList(3);
 //        playerList.add(p1);
 //        playerList.add(p2);
@@ -51,24 +54,92 @@ public class Game {
 
     }
 
-    private void startServer() {
+    public void startServer() {
         clients = new ArrayList<>(3);
+        Socket socket;
 
         try {
             serverSocket = new ServerSocket(4100);      //CS 410(0)
+            socket = null;
+            int numConnected = 0;
+
+            while (numConnected < 3) {
+                socket = serverSocket.accept();
+                PrintWriter outBound = new PrintWriter(socket.getOutputStream(), true);
+                BufferedReader inBound = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+
+                clients.add(new ClientConnection(socket, outBound, inBound));
+
+                Runnable server = new Runnable() {
+                    @Override
+                    public void run() {
+//                        receiveLoop(inBound, outBound);
+                    }
+                };
+                new Thread(server).start();
+
+                ++numConnected;
+
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-        while (true) {
-            try {
-                Socket sock = serverSocket.accept();
-                new CommunicationThread(sock).start();
-            } catch (IOException e) {
-                e.printStackTrace();
+
+    }
+
+    private void receiveLoop(BufferedReader inBound, PrintWriter outBound) {
+        String message;
+
+        try {
+            while (true) {
+                if ((message = inBound.readLine()) != null) {
+                    System.out.println(message);
+                    executeCommand(message, outBound);
+                }
             }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
+
+    private String receiveMessage(BufferedReader inBound) {
+        String message = "";
+
+        try {
+            while (true) {
+                if ((message = inBound.readLine()) != null) {
+                    break;
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return message;
+    }
+
+    public void startUpTest() {
+        List<String> strDeck = genStrDeck();
+        shuffleDeck2(strDeck);
+        sendDeckOverNet(strDeck);
+        getClientNames();
+
+        for (ClientConnection client : clients) {
+            client.outBound.println("setlogtext~Hi Bud");
+            client.outBound.println("startgui~");
+        }
+    }
+
+    private void getClientNames() {
+        for (ClientConnection client : clients) {
+            client.outBound.println("getname~");
+
+            String name = receiveMessage(client.inBound);
+            client.setName(name);
+        }
+    }
+
 
 
     /*
@@ -115,7 +186,7 @@ public class Game {
         }
 
         return genDeck;
-    }
+    }   //Used in net
 
     //Shuffles the deck
     private void shuffleDeck() {
@@ -138,7 +209,7 @@ public class Game {
 
             swapDock(dock, index, i);
         }
-    }
+    }       //Used in net
 
     private void swapDock(List<String> list, int i, int j) {
         String temp;
@@ -146,7 +217,7 @@ public class Game {
         temp = list.get(i);
         list.set(i, list.get(j));
         list.set(j, temp);
-    }
+    }   //Used in net
 
     //Swaps i with j
     private void swap(List<Card> list, int i, int j) {
@@ -172,6 +243,31 @@ public class Game {
         p3.setDeck(p3Deck);
     }
 
+    private void sendDeckOverNet(List<String> fullDeck) {
+        List<String> p1Deck = fullDeck.subList(0,  17);
+        List<String> p2Deck = fullDeck.subList(17, 34);
+        List<String> p3Deck = fullDeck.subList(34, 51);
+        List<List<String>> deckList = new ArrayList<>();
+        deckList.add(p1Deck);
+        deckList.add(p2Deck);
+        deckList.add(p3Deck);
+        int player = 0;
+
+        for (ClientConnection client : clients) {
+            for (String card : deckList.get(player)) {
+                client.outBound.println("handcard~" + card);
+
+            }
+            ++player;
+        }
+    }
+
+    private boolean currentPlayerHasPlayed() {
+        netCurrentPlayer.outBound.println("hasplayed~");
+        String played = receiveMessage(netCurrentPlayer.inBound);
+        return Boolean.parseBoolean(played);
+    }
+
     //Self-explanatory
     private void createAndShuffleDeck() {
         generateDeck();
@@ -186,60 +282,90 @@ public class Game {
      */
 
     //Looks at the player list, and if the player matches the one specified, they are set to be the current player
-    private void setCurrentPlayer(Player playerToSetCurrent) {
-        for (Player player : playerList) {
-            if (player == playerToSetCurrent) {
-                player.setCurrentTurn();
-                currentPlayer = playerToSetCurrent;
+    private void setCurrentPlayer(ClientConnection playerToSetCurrent) {
+//        for (Player player : playerList) {
+//            if (player == playerToSetCurrent) {
+//                player.setCurrentTurn();
+//                currentPlayer = playerToSetCurrent;
+//            } else {
+//                player.setNotCurrentTurn();
+//            }
+//        }
+
+        for (ClientConnection client : clients) {
+            if (client == playerToSetCurrent) {
+                client.outBound.println("setcurrturn~");
+                netCurrentPlayer = client;
             } else {
-                player.setNotCurrentTurn();
+                client.outBound.println("setnotturn~");
             }
         }
     }
 
     //Selects the next player to play in the round
     private void selectNextPlayer() {
-        int currPlayerIndex = playerList.indexOf(currentPlayer);
+//        int currPlayerIndex = playerList.indexOf(currentPlayer);
+        int currPlayerIndex = clients.indexOf(netCurrentPlayer);
+
+//        try {
+//            if (playerList.get(currPlayerIndex + 1) != null) {
+//                currentPlayer = playerList.get(currPlayerIndex+1);
+//                currentPlayer.setCurrentTurn();
+//            }
+//        } catch (IndexOutOfBoundsException throwAway) {     //If we are at the end of the list, go to the beginning
+//            currentPlayer = playerList.get(0);
+//            currentPlayer.setCurrentTurn();
+//        }
 
         try {
-            if (playerList.get(currPlayerIndex + 1) != null) {
-                currentPlayer = playerList.get(currPlayerIndex+1);
-                currentPlayer.setCurrentTurn();
+            if (clients.get(currPlayerIndex+1) != null) {
+                netCurrentPlayer = clients.get(currPlayerIndex + 1);
+                netCurrentPlayer.outBound.println("setcurrturn~");
             }
-        } catch (IndexOutOfBoundsException throwAway) {     //If we are at the end of the list, go to the beginning
-            currentPlayer = playerList.get(0);
-            currentPlayer.setCurrentTurn();
+        } catch (IndexOutOfBoundsException ignored) {
+            netCurrentPlayer = clients.get(0);
+            netCurrentPlayer.outBound.println("setcurrturn~");
         }
     }
 
     //Sends the updated scores to all of the players
     private void updatePlayerCurrentScores() {
-        int[] scores;
-        int p1Score = playerList.get(0).getScore();      //Get the score from all of the players
-        int p2Score = playerList.get(1).getScore();
-        int p3Score = playerList.get(2).getScore();
+//        int[] scores;
+//        int p1Score = playerList.get(0).getScore();      //Get the score from all of the players
+//        int p2Score = playerList.get(1).getScore();
+//        int p3Score = playerList.get(2).getScore();
+//
+//        currentScores = new int[] {p1Score, p2Score, p3Score};
+//
+//        //Send the scores to all of the players
+//        for (Player player : playerList) {
+//            player.updateCurrentScores(currentScores);
+//        }
 
-        scores = new int[] {p1Score, p2Score, p3Score};
+        clients.get(0).outBound.println("getscore~");
+        int p1Score = Integer.parseInt(receiveMessage(clients.get(0).inBound));
+        clients.get(1).outBound.println("getscore~");
+        int p2Score = Integer.parseInt(receiveMessage(clients.get(1).inBound));
+        clients.get(2).outBound.println("getscore~");
+        int p3Score = Integer.parseInt(receiveMessage(clients.get(2).inBound));
 
-        //Send the scores to all of the players
-        for (Player player : playerList) {
-            player.updateCurrentScores(scores);
+        currentScores = new int[] {p1Score, p2Score, p3Score};
+
+        for (ClientConnection client : clients) {
+            client.outBound.println(getScoreString());
         }
     }
 
     //Goes through the player list, and sends each player the name of the current player
     private void setCurrentPlayerInList() {
-        String playerName = currentPlayer.getName();
+        String playerName = netCurrentPlayer.getName();
 
-        for (Player player : playerList) {
-            player.setCurrentPlayer(playerName);
+        for (ClientConnection client : clients) {
+            client.outBound.println("setcurrplayer~" + playerName);
         }
     }
 
-    //Sends the player back to a client
-    private void sendPlayerOverNetwork(Player playerToSend) {
 
-    }
 
 
     /*
@@ -259,33 +385,26 @@ public class Game {
      *
      */
     public void playGame() {
-        Runnable server = new Runnable() {
-            @Override
-            public void run() {
-                startServer();
-            }
-        };
-        new Thread(server).start();
+        List<String> strDeck = genStrDeck();
+        shuffleDeck2(strDeck);
+        sendDeckOverNet(strDeck);
 
-        createAndShuffleDeck();
-        splitAndDistributeDeck(playerList.get(0), playerList.get(1), playerList.get(2));    //TODO: network this
+        getClientNames();
 
-        lastRoundWinner = playerList.get(0);   //P1 leads the first round
-        currentPlayer = playerList.get(0);
-        currentPlayer.setCurrentTurn();
+        netLastRoundWinner = clients.get(0);
+        netCurrentPlayer = clients.get(0);
+        netCurrentPlayer.outBound.println("setcurrturn~");
         setCurrentPlayerInList();
 
-        //Send over network
-
-        for (Player player : playerList) {      //Start the GUI for each player     TODO: this will be done locally now
-            player.startGUI();
+        for (ClientConnection client : clients) {       //Start each player's gui
+            client.outBound.println("startgui~");
         }
 
         for (int i = 1; i <= 17; ++i) {     //Play 17 rounds
             playRound();
         }
-
-        getWinner();    //Gets the game's winner    TODO: over network
+//
+        getWinner();    //Gets the game's winner
     }
 
     /*
@@ -299,25 +418,34 @@ public class Game {
      *
      */
     private void playRound() {
-        Player roundWinner = null;  //No one has won yet
+        System.out.println("in round");
+        ClientConnection roundWinner = null;  //No one has won yet
         Card highestCard;
         List<Card> cardsPlayed = new ArrayList<>();     //The cards that have been played in this round
 
-        setCurrentPlayer(lastRoundWinner);  //The winner of the last round goes first
+        setCurrentPlayer(netLastRoundWinner);  //The winner of the last round goes first
         playersPlayed = 0;      //No one has played yet
 
-        for (Player player : playerList) {      //Reset the data and GUI for all of the players     TODO: Network
-            player.setHasNotPlayed();
-            player.clearOthersCards();
-            player.clearGameBoard();
-            player.setCurrentPlayer(currentPlayer.getName());
-            player.updateLogArea();
+//        for (Player player : playerList) {      //Reset the data and GUI for all of the players     TODO: Network
+//            player.setHasNotPlayed();
+//            player.clearOthersCards();
+//            player.clearGameBoard();
+//            player.setCurrentPlayer(currentPlayer.getName());
+//            player.updateLogArea();
+//        }
+
+        System.out.println("before reset");
+        for (ClientConnection client : clients) {
+            client.outBound.println("sethasnotplayed~");
+            client.outBound.println("clrboard~");
+            client.outBound.println("clrcards~");
+            client.outBound.println("setcurrplayer~" + netCurrentPlayer.getName());
+            client.outBound.println("updatelog~");
         }
 
-        //Send out the update over network here
 
         do {
-            while (!currentPlayer.hasPlayed()) {    //Wait until the current player has played their card
+            while (!currentPlayerHasPlayed()) {    //Wait until the current player has played their card
                 try {
                     Thread.sleep(50);
                 } catch (InterruptedException e) {
@@ -325,11 +453,20 @@ public class Game {
                 }
             }
 
-            cardsPlayed.add(currentPlayer.getLastCardPlayed());     //Add the card that was played to the list
+            System.out.println("Player has palayed");
 
-            for (Player player : playerList) {
+            netCurrentPlayer.outBound.println("getlastcard~");
+            String netCard = receiveMessage(netCurrentPlayer.inBound);
+            netCard = receiveMessage(netCurrentPlayer.inBound);
+            System.out.println(netCard);
+            Card cardPlayed = new Card(Integer.parseInt(netCard.substring(0, netCard.indexOf("|"))), netCard.substring(netCard.indexOf("|")+1));
+            cardsPlayed.add(cardPlayed);     //Add the card that was played to the list
+
+            for (ClientConnection client : clients) {
                 //Send the list of cards that have been played to all of the players
-                player.updateOthersCards(currentPlayer.getLastCardPlayed());
+//                player.updateOthersCards(currentPlayer.getLastCardPlayed());
+                System.out.println("in update loop: " + netCard);
+                client.outBound.println("updtotherscards~" + cardPlayed.toNetString());
 
                 /* So this next part is funny. The adding the cards to the panel was not working, except for player 3.
                  *  I tested it, and the data was there, just not the card button. So as it worked out, the program
@@ -337,18 +474,23 @@ public class Game {
                  *  so that was why only player three was getting the image. Pausing the thread for just enough time to
                  *  let each player load the image works, and that is what you see below.
                  */
-                try {
-                    Thread.sleep(2);    //2ms is the fastest it can be
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+//                try {
+//                    Thread.sleep(2);    //2ms is the fastest it can be
+//                } catch (InterruptedException e) {
+//                    e.printStackTrace();
+//                }
             }
 
             selectNextPlayer();
 
-            for (Player player : playerList) {      //Tell all of the players who the current player now is
-                player.setCurrentPlayer(currentPlayer.getName());
-                player.updateLogArea();
+//            for (Player player : playerList) {      //Tell all of the players who the current player now is
+//                player.setCurrentPlayer(currentPlayer.getName());
+//                player.updateLogArea();
+//            }
+
+            for (ClientConnection client : clients) {
+                client.outBound.println("setcurrplayer~" + netCurrentPlayer.getName());
+                client.outBound.println("updatelog~");
             }
 
             ++playersPlayed;    //One more player has played
@@ -358,16 +500,19 @@ public class Game {
         //After the round is over
         highestCard = getHighestCardFromList(cardsPlayed);      //Get the winning card
 
-        for (Player player : playerList) {      //Find out who played the winning card
-            if (player.getLastCardPlayed() == highestCard) {
-                roundWinner = player;
+        for (ClientConnection client : clients) {      //Find out who played the winning card
+            client.outBound.println("getlastcard~");
+            String cardPlayed = receiveMessage(client.inBound);
+
+            if (cardPlayed.equals(highestCard.toNetString())) {
+                roundWinner = client;
                 break;
             }
         }
 
         //Award a win to the highest card
         try {
-            roundWinner.addWin();
+            roundWinner.outBound.println("addwin~");
         } catch (NullPointerException e) {
             e.printStackTrace();
         }
@@ -376,7 +521,7 @@ public class Game {
         updatePlayerCurrentScores();
 
         //Set lastRoundWinner to the winner so that they go first next round
-        lastRoundWinner = roundWinner;
+        netLastRoundWinner = roundWinner;
     }
 
     //Returns the highest Card from the given List
@@ -418,29 +563,50 @@ public class Game {
 
     //Computes the winner of the game, and informs the players
     private void getWinner() {
-        Player winner = playerList.get(0);
+        ClientConnection winner = clients.get(0);
         int highestScore = 0;   //The current winning score
 
-        for (Player player: playerList) {
-            //If this player has a higher score than the current highest, they are now the highest scorer
-            if (player.getScore() > highestScore) {
-                highestScore = player.getScore();
-                winner = player;
-            } else if (player.getScore() == highestScore) {     //In case of a tie
-                winner = breakTie(player, winner);
+//        for (Player player: playerList) {
+//            //If this player has a higher score than the current highest, they are now the highest scorer
+//            if (player.getScore() > highestScore) {
+//                highestScore = player.getScore();
+//                winner = player;
+//            } else if (player.getScore() == highestScore) {     //In case of a tie
+//                winner = breakTie(player, winner);
+//            }
+//        }
+
+        for (ClientConnection client : clients) {
+            client.outBound.println("getscore~");
+            int score = Integer.parseInt(receiveMessage(client.inBound));
+
+            if (score > highestScore) {
+                highestScore = score;
+                winner = client;
+            } else if (score == highestScore) {
+                winner = netBreakTie(client, winner);
             }
         }
 
-        for (Player player : playerList) {      //Tell all of the players whether or not they won
-            if (player == winner) {
-                player.setLogText("YOU WIN!");
+//        for (Player player : playerList) {      //Tell all of the players whether or not they won
+//            if (player == winner) {
+//                player.setLogText("YOU WIN!");
+//            } else {
+//                player.setLogText("You lose");
+//            }
+//            player.clearGameBoard();
+//        }
+
+        for (ClientConnection client : clients) {
+            if (client == winner) {
+                client.outBound.println("setlogtext~YOU WIN!");
             } else {
-                player.setLogText("You lose");
+                client.outBound.println("setlogtext~You lose");
             }
-            player.clearGameBoard();
+
+            client.outBound.println("clrboard~");
         }
 
-        //Send over network
 
     }
 
@@ -471,6 +637,61 @@ public class Game {
         }
 
         return tieWinner;
+    }
+
+    private ClientConnection netBreakTie(ClientConnection c1, ClientConnection c2) {
+        ClientConnection tieWinner;
+        int p1Wins = 0;
+        int p2Wins = 0;
+        Card p1Card;
+        Card p2Card;
+
+        for (int i = 0; i < 17; ++i) {
+            c1.outBound.println("getcardplayed~" + i);
+            String netCard = receiveMessage(c1.inBound);
+        }
+
+        return c1;      //TODO change please
+    }
+
+
+    /*
+     *
+     *  Network methods
+     *
+     */
+
+    private void executeCommand(String rawMessage, PrintWriter outBound) {
+        String command;
+        String data;
+
+        if (!rawMessage.contains("~")) {    //Not a command
+            return; //Parse any data here
+        }
+
+        command = rawMessage.substring(0, rawMessage.indexOf("~"));
+        data = rawMessage.substring(rawMessage.indexOf("~")+1);
+
+        switch (command) {
+            case ("playcard"):
+                outBound.println("updtotherscards~" + data);
+                break;
+            case ("endofround"):    //End of round update needed?
+                outBound.println(getScoreString());     //Update scores
+                outBound.println("setcurrplayer~" + currentPlayer.getName());
+                outBound.println("clrboard~");
+                outBound.println("clrcards~");
+            default:
+                break;
+        }
+    }
+
+    private String getScoreString() {
+        String ss = "updatecurrscores~";
+
+        ss += currentScores[0] + "|" + currentScores[1] + "|" + currentScores[2];
+
+        return ss;
     }
 
 

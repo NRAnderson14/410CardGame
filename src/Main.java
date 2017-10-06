@@ -39,7 +39,7 @@ public class Main {
 //                socket = new Socket("127.0.0.1", 4100);
 //            }
 
-            Game testGame = new Game(playerUno, playerDos, playerTres);
+            Game testGame = new Game();
             List<String> dock = testGame.genStrDeck();
             testGame.shuffleDeck2(dock);
 
