@@ -15,7 +15,9 @@ import java.io.Serializable;
  *  The images are in the format of "VS.png", where V is the value 2-14, and S is the suit, C, D, H, or S.
  *
  */
+
 public class Card extends JButton implements Serializable {
+	
     private int value;
     private Suit suit;
     private String imgURL;
@@ -27,9 +29,12 @@ public class Card extends JButton implements Serializable {
     public Card(int value, Suit suit) {
         this.value = value;
         this.suit = suit;
+        
         imgURL = getURL();  //Get the image URL based on the suit and value
 
         loadImage();        //Load the image specified in imgURL
+        
+      
     }
 
     public Card(int value, String suit) {
@@ -52,6 +57,12 @@ public class Card extends JButton implements Serializable {
 
         imgURL = getURL();
         loadImage();
+        
+        //button characteristics
+      	this.setBorderPainted(false);
+      	this.setMargin(new Insets(3,0,0,0));	
+      	this.setContentAreaFilled(true);
+      	
     }
 
 
@@ -67,6 +78,7 @@ public class Card extends JButton implements Serializable {
 
     //Used for breaking ties by ordering the suits by values
     public int suitToValue() {
+    	
         int val = 0;
 
         switch (suit) {
@@ -131,7 +143,7 @@ public class Card extends JButton implements Serializable {
         return res;
     }
 
-    //Constructs the file URL for the appropriate card png, and returns that as a String
+    //Constructs the URL for the appropriate card png, and returns that as a String
     private String getURL() {
         String url;
 
@@ -142,7 +154,7 @@ public class Card extends JButton implements Serializable {
 
     //Loads the png file
     private void loadImage() {
-        int ratio = 8;
+        int ratio = 10;
 
         try {
             Image img = ImageIO.read(getClass().getResource(imgURL));
@@ -153,7 +165,6 @@ public class Card extends JButton implements Serializable {
         }
     }
 
-    //For use over the network
     public String toNetString() {
         String res = "";
 

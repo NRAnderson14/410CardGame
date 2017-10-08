@@ -1,3 +1,4 @@
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.io.*;
@@ -26,23 +27,23 @@ public class Player extends JFrame implements Serializable {   //Split into data
 
     //Network data
     private final String HOST;
-    private final int PORT = 4100;
+    private final int PORT;
     private Socket socket;
     private PrintWriter outBound;
     private BufferedReader inBound;
 
     //GUI
     private JPanel frame = new JPanel();
-    private JPanel cardHolder = new JPanel();       //The bottom of the screen, where all of the cards appear
+    ImageBoard cardHolder = new ImageBoard(null);       //The bottom of the screen, where all of the cards appear
     private JPanel topBar = new JPanel();           //The top of the screen, where the messages and score appear
     private JPanel logArea = new JPanel();          //Where the messages are displayed
     private JPanel scoreArea = new JPanel();        //Where the scores are displayed
-    private JPanel gameBoard = new JPanel();        //The middle of the screen, where the cards that are in play appear
+    ImageBoard gameBoard = new ImageBoard(null);       //The middle of the screen, where the cards that are in play appear
     private JLabel score = new JLabel();
     private JTextArea log = new JTextArea();
-
-
-    public Player(String name, String host) throws IOException {
+ 
+ 
+    public Player(String name, String host, int port) throws IOException {
         this.name = name;
         this.hand = new ArrayList<>();
         cardsPlayedByPlayer = new ArrayList<>();
@@ -53,6 +54,7 @@ public class Player extends JFrame implements Serializable {   //Split into data
         hasPlayed = false;
 
         this.HOST = host;
+        this.PORT = port;
 
         socket = new Socket(HOST, PORT);
         outBound = new PrintWriter(socket.getOutputStream(), true);
@@ -77,6 +79,11 @@ public class Player extends JFrame implements Serializable {   //Split into data
     /*
      *  Score methods
      */
+
+    //Gets the player's current score
+    public int getScore() {
+        return gameScore;
+    }
 
     //Gives the player another win
     public void addWin() {
@@ -121,8 +128,17 @@ public class Player extends JFrame implements Serializable {   //Split into data
         }
     }
 
+    //Gives the player the list of cards that they can play this game
+    public void setDeck(List<Card> hand) {
+        this.hand = new ArrayList<>(hand);
+    }
+
     private void setLastCardPlayed(Card lastPlayed) {
         lastCardPlayed = lastPlayed;
+    }
+
+    public Card getLastCardPlayed() {
+        return lastCardPlayed;
     }
 
     //Returns all of the cards played by the player over the course of the game; Used for tie-breaking
@@ -166,6 +182,10 @@ public class Player extends JFrame implements Serializable {   //Split into data
         return isCurrentTurn;
     }
 
+    public boolean hasPlayed() {
+        return hasPlayed;
+    }
+
     public void setHasNotPlayed() {
         hasPlayed = false;
     }
@@ -198,8 +218,6 @@ public class Player extends JFrame implements Serializable {   //Split into data
      *  Network methods
      *
      */
-
-    //Main loop to receive server messages
     private void netLoop() {
         String message;
 
@@ -214,11 +232,11 @@ public class Player extends JFrame implements Serializable {   //Split into data
         }
     }
 
-    //Takes a server command and executes it
     private void executeCommand(String rawMessage) {
         String command;
         String data;
 
+        System.out.println(rawMessage);
         command = rawMessage.substring(0, rawMessage.indexOf("~"));
         data = rawMessage.substring(rawMessage.indexOf("~")+1);
 
@@ -239,7 +257,7 @@ public class Player extends JFrame implements Serializable {   //Split into data
             case ("setlogtext"):
                 this.setLogText(data);
                 break;
-            case ("handcard"):      //Add a card to the player's hand
+            case ("handcard"):  //Works
                 int val = Integer.parseInt(data.substring(0,data.indexOf("|")));
                 String suit = data.substring(data.indexOf("|")+1);
                 hand.add(new Card(val, suit));
@@ -316,6 +334,7 @@ public class Player extends JFrame implements Serializable {   //Split into data
 
     //Starts the player's window
     public void startGUI() {
+    	
         this.setTitle(name);    //The name of the player
         this.setSize(300, 300);
         this.setLocation(100, 100);
@@ -323,7 +342,7 @@ public class Player extends JFrame implements Serializable {   //Split into data
 
         Container container = this.getContentPane();
         container.add(frame);
-        frame.setPreferredSize(new Dimension(1000, 700)); //main window size
+        frame.setPreferredSize(new Dimension(1200, 600)); //main window size
         frame.setLayout(new BorderLayout());
 
         setupTopBar();          //Sets up the top,
@@ -357,9 +376,10 @@ public class Player extends JFrame implements Serializable {   //Split into data
     private void setupScoreArea() {
         Font scoreFont = new Font("Helvetica", Font.BOLD, 34);
 
-        scoreArea.setBackground(Color.yellow);
-        scoreArea.setPreferredSize(new Dimension(500, 50));
+        scoreArea.setBackground(Color.WHITE);
+        scoreArea.setPreferredSize(new Dimension(600, 50));
         scoreArea.setLayout(new BorderLayout());
+        scoreArea.setBorder(BorderFactory.createBevelBorder(0));
         topBar.add(scoreArea, BorderLayout.EAST);
 
         String scoreString = "P1: " + currentScores[0] + "\t P2: " + currentScores[1] + "\t P3: " + currentScores[2] + "\t\t";
@@ -373,7 +393,8 @@ public class Player extends JFrame implements Serializable {   //Split into data
         Font logFont = new Font("Helvetica", Font.BOLD, 24);
 
         logArea.setBackground(Color.WHITE);
-        logArea.setPreferredSize(new Dimension(500, 50));
+        logArea.setPreferredSize(new Dimension(600, 50));
+        logArea.setBorder(BorderFactory.createBevelBorder(0));
         topBar.add(logArea, BorderLayout.WEST);
 
         if (isCurrentTurn()) {
@@ -388,15 +409,39 @@ public class Player extends JFrame implements Serializable {   //Split into data
 
     //Sets up the middle of the screen, where the cards in play will appear
     private void setupGameBoard() {
+    		//Loads image
+    		Image tableImage;
+    		try {
+    				int ratio = 5;
+				tableImage = ImageIO.read(getClass().getResource("Images/tableTop.jpg")); //3600 × 2400
+				Image resizedTableImage = tableImage.getScaledInstance(3600/(ratio/2), 2400/(ratio/1), java.awt.Image.SCALE_SMOOTH);
+				gameBoard = new ImageBoard(resizedTableImage);
+				
+    		} catch (IOException e){
+    			System.out.println("Couldnt load center image");
+    		}
+    		
         gameBoard.setBackground(Color.green);
         gameBoard.setPreferredSize(new Dimension(1000, 385));
         frame.add(gameBoard, BorderLayout.CENTER);
+        
     }
 
     //Sets up the bottom of the screen, where the player's hand of cards appears
     private void setupCardHolder() {
+    	//Loads image
+    	Image cardHolderIMG;
+    	try {
+    		cardHolderIMG = ImageIO.read(getClass().getResource("Images/cardHolder.jpg"));//4460 × 2973
+		Image resizedcardHolderIMG = cardHolderIMG.getScaledInstance(1200, 130, java.awt.Image.SCALE_SMOOTH);
+		cardHolder = new ImageBoard(resizedcardHolderIMG);
+		
+    	} catch (IOException e) {
+    		
+    		System.out.println("Couldnt load card holder image");
+    	}
         cardHolder.setBackground(Color.BLUE);
-        cardHolder.setPreferredSize(new Dimension(1000, 225));
+        cardHolder.setPreferredSize(new Dimension(1000, 110));
         frame.add(cardHolder, BorderLayout.SOUTH);
     }
 
