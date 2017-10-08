@@ -101,8 +101,7 @@ public class MainMenu extends JFrame implements ActionListener {
 			//Have a Player Join a Server
 			if (button.equals("Join")){try {
 					newPlayer = new Player(getName(), getIP());
-					log.setText("Welcome " + newPlayer.getName() + " we are waiting for others!");
-					log.updateUI();
+					this.setVisible(false);
 				} catch (IOException e1) {
 					// TODO Auto-generated catch block
 					e1.printStackTrace();
@@ -119,10 +118,8 @@ public class MainMenu extends JFrame implements ActionListener {
 						}
 					};
 					new Thread(hostThread).start();
-					 newPlayer = new Player(getName(), InetAddress.getLocalHost().getHostAddress());
-						log.setText("Welcome " + newPlayer.getName() + " we are waiting for others!");
-						log.updateUI();
-						
+                    newPlayer = new Player(getName(), InetAddress.getLocalHost().getHostAddress());
+                    this.setVisible(false);
 				} catch (IOException e1) {
 					// TODO Auto-generated catch block
 					e1.printStackTrace();
