@@ -27,7 +27,7 @@ public class Player extends JFrame implements Serializable {   //Split into data
 
     //Network data
     private final String HOST;
-    private final int PORT;
+    private final int PORT = 4100;
     private Socket socket;
     private PrintWriter outBound;
     private BufferedReader inBound;
@@ -43,7 +43,7 @@ public class Player extends JFrame implements Serializable {   //Split into data
     private JTextArea log = new JTextArea();
  
  
-    public Player(String name, String host, int port) throws IOException {
+    public Player(String name, String host) throws IOException {
         this.name = name;
         this.hand = new ArrayList<>();
         cardsPlayedByPlayer = new ArrayList<>();
@@ -54,7 +54,6 @@ public class Player extends JFrame implements Serializable {   //Split into data
         hasPlayed = false;
 
         this.HOST = host;
-        this.PORT = port;
 
         socket = new Socket(HOST, PORT);
         outBound = new PrintWriter(socket.getOutputStream(), true);
