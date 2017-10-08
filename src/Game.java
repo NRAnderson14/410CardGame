@@ -79,6 +79,7 @@ public class Game {
                 new Thread(server).start();
 
                 ++numConnected;
+                System.out.println("connected: " + numConnected);
 
             }
         } catch (IOException e) {
@@ -648,10 +649,26 @@ public class Game {
 
         for (int i = 0; i < 17; ++i) {
             c1.outBound.println("getcardplayed~" + i);
-            String netCard = receiveMessage(c1.inBound);
+            String p1NetCard = receiveMessage(c1.inBound);
+            p1Card = new Card(Integer.parseInt(p1NetCard.substring(0, p1NetCard.indexOf("|"))), p1NetCard.substring(p1NetCard.indexOf("|")+1));
+            c2.outBound.println("getcardplayed~" + i);
+            String p2NetCard = receiveMessage(c2.inBound);
+            p2Card = new Card(Integer.parseInt(p2NetCard.substring(0, p2NetCard.indexOf("|"))), p2NetCard.substring(p2NetCard.indexOf("|")+1));
+
+            if (getHighestCardOfTwo(p1Card, p2Card) == p1Card) {
+                ++p1Wins;
+            } else {
+                ++p2Wins;
+            }
         }
 
-        return c1;      //TODO change please
+        if (p1Wins > p2Wins) {
+            tieWinner = c1;
+        } else {
+            tieWinner = c2;
+        }
+
+        return tieWinner;
     }
 
 

@@ -7,9 +7,7 @@ public class ClientTest {
     public static void main(String[] args) {
 
         try {
-            Player testPlayer = new Player("testname1", "127.0.0.1", 4100);
-            Player testPlayer2 = new Player("testname2", "127.0.0.1", 4100);
-            Player testPlayer3 = new Player("testname3", "127.0.0.1", 4100);
+            Player testPlayer = new Player("Nathan", "10.19.80.39", 4100);
 //            Socket socket = new Socket("127.0.0.1", 4100);
 //            PrintWriter outBound = new PrintWriter(socket.getOutputStream(), true);
 //            BufferedReader inBound = new BufferedReader(new InputStreamReader(socket.getInputStream()));
