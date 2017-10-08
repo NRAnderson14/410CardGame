@@ -78,11 +78,6 @@ public class Player extends JFrame implements Serializable {   //Split into data
      *  Score methods
      */
 
-    //Gets the player's current score
-    public int getScore() {
-        return gameScore;
-    }
-
     //Gives the player another win
     public void addWin() {
         ++gameScore;
@@ -224,7 +219,6 @@ public class Player extends JFrame implements Serializable {   //Split into data
         String command;
         String data;
 
-        System.out.println(rawMessage);
         command = rawMessage.substring(0, rawMessage.indexOf("~"));
         data = rawMessage.substring(rawMessage.indexOf("~")+1);
 
