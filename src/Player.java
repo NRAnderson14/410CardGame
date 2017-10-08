@@ -26,7 +26,7 @@ public class Player extends JFrame implements Serializable {   //Split into data
 
     //Network data
     private final String HOST;
-    private final int PORT;
+    private final int PORT = 4100;
     private Socket socket;
     private PrintWriter outBound;
     private BufferedReader inBound;
@@ -42,7 +42,7 @@ public class Player extends JFrame implements Serializable {   //Split into data
     private JTextArea log = new JTextArea();
 
 
-    public Player(String name, String host, int port) throws IOException {
+    public Player(String name, String host) throws IOException {
         this.name = name;
         this.hand = new ArrayList<>();
         cardsPlayedByPlayer = new ArrayList<>();
@@ -53,7 +53,6 @@ public class Player extends JFrame implements Serializable {   //Split into data
         hasPlayed = false;
 
         this.HOST = host;
-        this.PORT = port;
 
         socket = new Socket(HOST, PORT);
         outBound = new PrintWriter(socket.getOutputStream(), true);
@@ -127,17 +126,8 @@ public class Player extends JFrame implements Serializable {   //Split into data
         }
     }
 
-    //Gives the player the list of cards that they can play this game
-    public void setDeck(List<Card> hand) {
-        this.hand = new ArrayList<>(hand);
-    }
-
     private void setLastCardPlayed(Card lastPlayed) {
         lastCardPlayed = lastPlayed;
-    }
-
-    public Card getLastCardPlayed() {
-        return lastCardPlayed;
     }
 
     //Returns all of the cards played by the player over the course of the game; Used for tie-breaking
@@ -181,10 +171,6 @@ public class Player extends JFrame implements Serializable {   //Split into data
         return isCurrentTurn;
     }
 
-    public boolean hasPlayed() {
-        return hasPlayed;
-    }
-
     public void setHasNotPlayed() {
         hasPlayed = false;
     }
@@ -217,6 +203,8 @@ public class Player extends JFrame implements Serializable {   //Split into data
      *  Network methods
      *
      */
+
+    //Main loop to receive server messages
     private void netLoop() {
         String message;
 
@@ -231,6 +219,7 @@ public class Player extends JFrame implements Serializable {   //Split into data
         }
     }
 
+    //Takes a server command and executes it
     private void executeCommand(String rawMessage) {
         String command;
         String data;
@@ -256,7 +245,7 @@ public class Player extends JFrame implements Serializable {   //Split into data
             case ("setlogtext"):
                 this.setLogText(data);
                 break;
-            case ("handcard"):  //Works
+            case ("handcard"):      //Add a card to the player's hand
                 int val = Integer.parseInt(data.substring(0,data.indexOf("|")));
                 String suit = data.substring(data.indexOf("|")+1);
                 hand.add(new Card(val, suit));

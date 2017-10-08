@@ -131,7 +131,7 @@ public class Card extends JButton implements Serializable {
         return res;
     }
 
-    //Constructs the URL for the appropriate card png, and returns that as a String
+    //Constructs the file URL for the appropriate card png, and returns that as a String
     private String getURL() {
         String url;
 
@@ -153,6 +153,7 @@ public class Card extends JButton implements Serializable {
         }
     }
 
+    //For use over the network
     public String toNetString() {
         String res = "";
 
