@@ -264,7 +264,6 @@ public class Player extends JFrame implements Serializable {   //Split into data
                 if (data.equals(this.getName())) {
                     this.setCurrentPlayer(this.getName());
                 } else {
-                    System.out.println(data);
                     this.setCurrentPlayer(data);
                 }
                 break;
