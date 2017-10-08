@@ -300,12 +300,12 @@ public class Game {
         setCurrentPlayer(lastRoundWinner);  //The winner of the last round goes first
         playersPlayed = 0;      //No one has played yet
 
-        for (ClientConnection currentPlayer : players) {
-            currentPlayer.outBound.println("sethasnotplayed~");
-            currentPlayer.outBound.println("clrboard~");
-            currentPlayer.outBound.println("clrcards~");
-            currentPlayer.outBound.println("setcurrplayer~" + currentPlayer.getName());
-            currentPlayer.outBound.println("updatelog~");
+        for (ClientConnection client : players) {
+            client.outBound.println("sethasnotplayed~");
+            client.outBound.println("clrboard~");
+            client.outBound.println("clrcards~");
+            client.outBound.println("setcurrplayer~" + currentPlayer.getName());
+            client.outBound.println("updatelog~");
         }
 
 
@@ -332,9 +332,9 @@ public class Game {
 
             selectNextPlayer();
 
-            for (ClientConnection currentPlayer : players) {
-                currentPlayer.outBound.println("setcurrplayer~" + currentPlayer.getName());
-                currentPlayer.outBound.println("updatelog~");
+            for (ClientConnection client : players) {
+                client.outBound.println("setcurrplayer~" + currentPlayer.getName());
+                client.outBound.println("updatelog~");
             }
 
             ++playersPlayed;    //One more player has played

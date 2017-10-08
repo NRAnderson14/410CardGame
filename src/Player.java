@@ -235,7 +235,6 @@ public class Player extends JFrame implements Serializable {   //Split into data
         String command;
         String data;
 
-        System.out.println(rawMessage);
         command = rawMessage.substring(0, rawMessage.indexOf("~"));
         data = rawMessage.substring(rawMessage.indexOf("~")+1);
 
@@ -265,6 +264,7 @@ public class Player extends JFrame implements Serializable {   //Split into data
                 if (data.equals(this.getName())) {
                     this.setCurrentPlayer(this.getName());
                 } else {
+                    System.out.println(data);
                     this.setCurrentPlayer(data);
                 }
                 break;
@@ -431,14 +431,17 @@ public class Player extends JFrame implements Serializable {   //Split into data
     	//Loads image
     	Image cardHolderIMG;
     	try {
+    	    Thread.sleep(15);
     		cardHolderIMG = ImageIO.read(getClass().getResource("Images/cardHolder.jpg"));//4460 × 2973
-		Image resizedcardHolderIMG = cardHolderIMG.getScaledInstance(1200, 130, java.awt.Image.SCALE_SMOOTH);
-		cardHolder = new ImageBoard(resizedcardHolderIMG);
+		    Image resizedcardHolderIMG = cardHolderIMG.getScaledInstance(1200, 130, java.awt.Image.SCALE_SMOOTH);
+		    cardHolder = new ImageBoard(resizedcardHolderIMG);
 		
     	} catch (IOException e) {
     		
     		System.out.println("Couldnt load card holder image");
-    	}
+    	} catch (InterruptedException e) {
+    	    e.printStackTrace();
+        }
         cardHolder.setBackground(Color.BLUE);
         cardHolder.setPreferredSize(new Dimension(1000, 110));
         frame.add(cardHolder, BorderLayout.SOUTH);
